@@ -46,6 +46,7 @@
         - role: "user"
           content: "{{ llm_prompt }}"
     return_content: true
+    timeout: 300
   register: llm_response
   failed_when: llm_response.status != 200
   when: llm_api_key != ''
