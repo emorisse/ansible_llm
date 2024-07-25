@@ -1,0 +1,27 @@
+---
+- name: Use OpenAI Caller Role
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/secure_vars.yml
+  
+  tasks:
+    - name: Call OpenAI API for a joke
+      include_role:
+        name: ansible_llm
+      vars:
+        llm_prompt: "Tell me a joke about programming"
+
+    - name: Display joke response
+      debug:
+        var: llm_result
+
+    - name: Call OpenAI API for Ansible explanation
+      include_role:
+        name: ansible_llm
+      vars:
+        llm_prompt: "Explain what an Ansible role is"
+
+    - name: Display Ansible explanation response
+      debug:
+        var: llm_result

@@ -1,0 +1,58 @@
+# roles/llm_caller/tasks/main.yml
+---
+- name: Ensure llm_api_key is set
+  ansible.builtin.set_fact:
+    llm_api_key: "{{ llm_api_key | default('') }}"
+
+- name: Check if model is defined
+  ansible.builtin.set_fact:
+    model_is_defined: "{{ true if llm_model is defined else false }}"
+
+- name: Look up model if not defined
+  block:
+    - name: Fetch latest recommended model
+      ansible.builtin.uri:
+        url: "{{ llm_url }}/models"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ llm_api_key }}"
+      register: models_response
+      when:
+        - not model_is_defined
+        - llm_api_key != ''
+  rescue:
+    - name: Handle model fetch failure
+      ansible.builtin.fail:
+        msg: "Failed to fetch models. Error: {{ models_response.msg | default('Unknown error') }}"
+
+- name: Set model from response
+  ansible.builtin.set_fact:
+    llm_model: "{{ models_response.json.data[0].id }}"
+  when:
+    - not model_is_defined
+    - llm_api_key != ''
+
+- name: Call LLM API
+  ansible.builtin.uri:
+    url: "{{ llm_url }}/chat/completions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ llm_api_key }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      model: "{{ llm_model }}"
+      messages:
+        - role: "user"
+          content: "{{ llm_prompt }}"
+    return_content: true
+  register: llm_response
+  failed_when: llm_response.status != 200
+  when: llm_api_key != ''
+
+- name: Set response in a variable
+  ansible.builtin.set_fact:
+    llm_result: "{{ llm_response.json.choices[0].message.content }}"
+  when:
+    - llm_api_key != ''
+    - llm_response.status == 200
