@@ -2,7 +2,7 @@
 - name: Perform Google Search and Parse Results
   hosts: localhost
   vars:
-    query: "{{ 'Voodoo, Ltd. murder mystery' | urlencode }}"
+    query: "{{ 'Who wrote the book Voodoo, Ltd. murder mystery' | urlencode }}"
   tasks:
     - name: Perform Google Search
       google_search:
