@@ -1,18 +1,37 @@
 ---
 - name: Perform Google Search and Parse Results
   hosts: localhost
+  gather_facts: false
+
   vars:
-    query: "{{ 'Who wrote the book Voodoo, Ltd. murder mystery' | urlencode }}"
+    search_string: 'What program makes this error, and what does it mean? 2022/02/11 13:12:24 [error] 37839#37839: *7 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 113.31.102.176, server: _, request: "GET /favicon.ico HTTP/1.1", host: "192.168.110.245:80"'
+    query: "{{ search_string | urlencode }}"
+    llm_host: "http://localhost:8000/v1"
+  vars_files:
+    - vars/secure_vars.yml
+
   tasks:
     - name: Perform Google Search
       google_search:
         query: "{{ query }}"
-        headers:
-          User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
       register: google_search_response
+
     - name: Set search results
       ansible.builtin.set_fact:
-        html_content: "{{ google_search_response }}"
-    - name: Let's see the results
+        html_content: "{{ google_search_response.output[0] | default([]) | map(attribute='title') | select('defined') | list | join('\n') }}"
+
+    - name: Display the resulting html_content variable
       ansible.builtin.debug:
         var: html_content
+
+    - name: Call OpenAI to answer the search_string
+      ansible.builtin.include_role:
+        name: ansible_llm
+      vars:
+        llm_prompt: "Here's some search results, please use them to answer this question: {{ search_string }}
+
+{{ html_content }}"
+
+    - name: Display joke response
+      ansible.builtin.debug:
+        var: llm_result
