@@ -2,6 +2,8 @@
 
 This Ansible role provides a flexible and robust way to interact with Language Model (LLM) APIs, such as [InstructLabs's](https://github.com/instructlab) LLMs. It handles API key management, dynamic model selection, and error handling.
 
+![ansible_llm in practice](example.png)
+
 ## Features
 
 - Dynamic model selection if not explicitly specified
