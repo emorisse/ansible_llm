@@ -32,6 +32,6 @@
 
 {{ html_content }}"
 
-    - name: Display joke response
+    - name: Display response
       ansible.builtin.debug:
         var: llm_result
